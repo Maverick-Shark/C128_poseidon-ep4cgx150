@@ -176,10 +176,18 @@ parameter CONF_STR = {
     "V,Poseidon-",`BUILD_DATE
 };
 
-assign sd_lba_mux = sd_lba[0];
-assign sd_buff_din_mux = sd_buff_din[0];
-
-//assign sd_blk_cnt_mux =  sd_blk_cnt[0];
+// SD card MUX: select active drive's LBA and data for user_io
+reg [31:0] sd_lba_mux;
+reg  [7:0] sd_buff_din_mux;
+always @(posedge clk_sys) begin
+   if (sd_rd[1] || sd_wr[1]) begin
+      sd_lba_mux     <= sd_lba[1];
+      sd_buff_din_mux<= sd_buff_din[1];
+   end else begin
+      sd_lba_mux     <= sd_lba[0];
+      sd_buff_din_mux<= sd_buff_din[0];
+   end
+end
 
 /////////////////  CLOCKS  ////////////////////////
 wire pll_locked;
@@ -257,20 +265,17 @@ wire ypbpr;
 
 
 
-wire [31:0] sd_lba[0];
-wire [31:0] sd_lba_mux;
-wire [5:0] sd_blk_cnt[0];
-//wire [5:0] sd_blk_cnt_mux;
+wire [31:0] sd_lba[2];
+wire  [5:0] sd_blk_cnt[2];
 wire [31:0] sd_lba_;
-reg [1:0] sd_rd;
-reg [1:0] sd_wr;
-wire [1:0] sd_ack;
-wire [1:0] sd_ack_mux;
+wire  [1:0] sd_rd;
+wire  [1:0] sd_wr;
+wire        sd_ack;
+wire  [1:0] sd_ack_x;
 wire [15:0] sd_buff_addr;
-wire [7:0] sd_buff_dout;
-wire [7:0] sd_buff_din[0];
-wire [7:0] sd_buff_din_mux;
-wire sd_buff_wr;
+wire  [7:0] sd_buff_dout;
+wire  [7:0] sd_buff_din[2];
+wire        sd_buff_wr;
 
 wire [1:0] img_mounted;
 wire img_readonly;
@@ -317,6 +322,7 @@ user_io(
     .sd_rd(sd_rd),
     .sd_wr(sd_wr),
     .sd_ack(sd_ack),
+    .sd_ack_x(sd_ack_x),
     .sd_buff_addr(sd_buff_addr),
     .sd_dout(sd_buff_dout),
     .sd_din(sd_buff_din_mux),
@@ -1329,18 +1335,7 @@ function [1:0] map_drive_model(input [1:0] st);
    endcase
 endfunction
 
-//always @(posedge clk_sys) begin
-//    if (sd_rd[0] || sd_wr[0]) begin
-//      sd_lba_mux     <= sd_lba[0];
-//      sd_buff_din_mux<= sd_buff_din[0];
-//      sd_ack[0]      <= sd_ack_mux; 
-//   end
-//    if (sd_rd[1] || sd_wr[1]) begin
-//      sd_lba_mux     <= sd_lba[1];
-//      sd_buff_din_mux<= sd_buff_din[1];
-//      sd_ack[1]      <= sd_ack_mux;	
-//   end
-//end
+// SD MUX is now at top of file (near CONF_STR)
 
 wire        drive_rom_req;
 wire [18:0] drive_rom_addr;
@@ -1385,7 +1380,7 @@ iec_drive iec_drive
    .sd_blk_cnt(sd_blk_cnt),
    .sd_rd(sd_rd),
    .sd_wr(sd_wr),
-   .sd_ack(sd_ack),
+   .sd_ack(sd_ack_x),
    .sd_buff_addr(sd_buff_addr),
    .sd_buff_dout(sd_buff_dout),
    .sd_buff_din(sd_buff_din),
