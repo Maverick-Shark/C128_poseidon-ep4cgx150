@@ -23,7 +23,14 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/osdinfo.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/iec_io.sv
 set_global_assignment -name VHDL_FILE ../rtl/video_vicII_656x.vhd
 set_global_assignment -name VHDL_FILE ../rtl/fpga64_sid_iec.vhd
-
+set_global_assignment -name VHDL_FILE ../rtl/c1541/c1541_sd.vhd
+set_global_assignment -name VHDL_FILE ../rtl/c1541/c1541_logic.vhd
+set_global_assignment -name VHDL_FILE ../rtl/c1541/gcr_floppy.vhd
+set_global_assignment -name VHDL_FILE ../rtl/c1541/c1541_logic.vhd
+set_global_assignment -name VHDL_FILE ../rtl/c1541/gen_rom.vhd
+set_global_assignment -name VHDL_FILE ../rtl/c1541/spram2.vhd
+set_global_assignment -name VHDL_FILE ../rtl/c1541/via6522.vhd
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl//c1541/mist_sd_card.sv
 set_global_assignment -name QIP_FILE ../mist-modules/mist.qip
 set_global_assignment -name QIP_FILE pll.qip
 set_global_assignment -name VERILOG_FILE ../sdram.v

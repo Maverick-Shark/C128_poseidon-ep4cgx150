@@ -66,8 +66,8 @@ module user_io (
 	output reg          sd_dout_strobe = 0,
 	input         [7:0] sd_din,
 	output reg          sd_din_strobe = 0,
-	//output reg [8+SD_BLKSZ:0] sd_buff_addr,
-        output reg [SD_BUFF_ADDR_WIDTH-1:0] sd_buff_addr,
+	output reg [8+SD_BLKSZ:0] sd_buff_addr,
+   //output reg [SD_BUFF_ADDR_WIDTH-1:0] sd_buff_addr,
 
 	output reg [SD_IMAGES-1:0] img_mounted, // rising edge if a new image is mounted
 	output reg   [63:0] img_size,    // size of image in bytes
@@ -123,7 +123,9 @@ parameter SD_IMAGES=2; // number of block-access images (max. 4 supported in cur
 parameter PS2BIDIR=0; // bi-directional PS2 interface
 parameter FEATURES=0; // requested features from the firmware
 parameter ARCHIE=0;
-parameter SD_BLKSZ=1'b0; // blocksize = 512<<SD_BLKSZ
+//parameter SD_BLKSZ=1'b0; // blocksize = 512<<SD_BLKSZ
+parameter SD_BLKSZ = 4'b0100;
+
 parameter SD_BUFF_ADDR_WIDTH = 16;
 
 localparam W = $clog2(SD_IMAGES);
