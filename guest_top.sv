@@ -160,12 +160,12 @@ parameter CONF_STR = {
 	 "S1U,D64G64D71G71D81T64,Mount #9;",
     "P1,DRIVES;",
     "P1O78,Enable Drive #8,If Mounted,Always,Never;",
-//    "P1O9A,Enable Drive #9,If Mounted,Always,Never;",
+    "P1O9A,Enable Drive #9,If Mounted,Always,Never;",
     "P1OBD,Drive #8 5.25\" model,Auto,1541,1571;",
-//    "P1OEG,Drive #9 5.25\" model,Auto,1541,1571;",
+    "P1OEG,Drive #9 5.25\" model,Auto,1541,1571;",
     "P1OI,External IEC,Disabled,Enabled;",
     "P1-;",
-//	 "T6,Reset Disk Drives;",
+    "T6,Reset Disk Drives;",
     "O2,Force C64 Mode,No,Yes;",
     "O45,Scanlines,Off,25%,50%,75%;",
     `SEP
@@ -176,16 +176,27 @@ parameter CONF_STR = {
     "V,Poseidon-",`BUILD_DATE
 };
 
-// SD card MUX: select active drive's LBA and data for user_io
-reg [31:0] sd_lba_mux;
-reg  [7:0] sd_buff_din_mux;
+// SD card MUX: select active drive's LBA and data for user_io.
+// Latch the active drive index at transfer start and hold through completion
+// to prevent mid-transfer switching if both drives become active.
+reg        sd_mux_sel;
+reg        sd_mux_busy;
+wire [31:0] sd_lba_mux     = sd_mux_sel ? sd_lba[1]      : sd_lba[0];
+wire  [7:0] sd_buff_din_mux = sd_mux_sel ? sd_buff_din[1] : sd_buff_din[0];
+
 always @(posedge clk_sys) begin
-   if (sd_rd[1] || sd_wr[1]) begin
-      sd_lba_mux     <= sd_lba[1];
-      sd_buff_din_mux<= sd_buff_din[1];
+   if (sd_mux_busy) begin
+      // Hold selection until transfer completes (ack deasserts)
+      if (!sd_ack) sd_mux_busy <= 0;
    end else begin
-      sd_lba_mux     <= sd_lba[0];
-      sd_buff_din_mux<= sd_buff_din[0];
+      // Latch drive selection at start of new transfer
+      if (sd_rd[1] || sd_wr[1]) begin
+         sd_mux_sel  <= 1;
+         sd_mux_busy <= 1;
+      end else if (sd_rd[0] || sd_wr[0]) begin
+         sd_mux_sel  <= 0;
+         sd_mux_busy <= 1;
+      end
    end
 end
 
@@ -267,7 +278,6 @@ wire ypbpr;
 
 wire [31:0] sd_lba[2];
 wire  [5:0] sd_blk_cnt[2];
-wire [31:0] sd_lba_;
 wire  [1:0] sd_rd;
 wire  [1:0] sd_wr;
 wire        sd_ack;
@@ -1315,8 +1325,7 @@ wire       drive_iec_srq_n_i;
 wire       drive_iec_clk_o;
 wire       drive_iec_data_o;
 wire       drive_iec_srq_n_o;
-//wire       drive_reset = ~reset_n | status[6] | drv_loading;
-wire       drive_reset = ~reset_n | drv_loading;
+wire       drive_reset = ~reset_n | status[6] | drv_loading;
 wire [1:0] drive_led;
 wire       disk_ready;
 
@@ -1334,8 +1343,6 @@ function [1:0] map_drive_model(input [1:0] st);
       default: return 2'bXX;
    endcase
 endfunction
-
-// SD MUX is now at top of file (near CONF_STR)
 
 wire        drive_rom_req;
 wire [18:0] drive_rom_addr;
